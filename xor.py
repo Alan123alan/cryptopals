@@ -29,12 +29,14 @@ frequencies = {
     "z" : 200,
 }
 
+
 def xor(buffer1:str, buffer2:str)->bytes:
     if len(buffer1) != len(buffer2):
         raise "Error, buffers have different lengths"
     buffer1_bytes = bytes.fromhex(buffer1)
     buffer2_bytes = bytes.fromhex(buffer2) 
     return bytes([b1_byte ^ b2_byte for (b1_byte, b2_byte) in zip(buffer1_bytes, buffer2_bytes)])
+
 
 def xor_decrypt(encrypted_str, key):
     #Prefer the approach of constructing a bytes string
@@ -43,6 +45,19 @@ def xor_decrypt(encrypted_str, key):
     #     decrypted_bytes += bytes([byte ^ key])
     # return decrypted_bytes
     return bytes([byte ^ key for byte in bytes.fromhex(encrypted_str)])
+
+
+def repeating_key_xor_encrypt(buffer, key):
+    buffer_bytes = bytes(buffer, "utf-8")
+    key_bytes = bytes(key, "utf-8")
+    print("key bytes", key_bytes)
+    encrypted_bytes = b""
+    for i, buffer_byte in enumerate(buffer_bytes):
+        print("i", i)
+        print("buffer byte", buffer_byte)
+        print("current key byte", key_bytes[i%len(key_bytes)])
+        encrypted_bytes += bytes([key_bytes[i%len(key_bytes)] ^ buffer_byte])
+    return encrypted_bytes
 
 
 def highest_probability_decrypted_bytes(encrypted_str):
@@ -69,22 +84,28 @@ def highest_probability_decrypted_bytes(encrypted_str):
 
 # getting the most probable decrypted version of each line in a file
 # then selecting the line with highest probability of being plain english
-file = open("./single_xor_hay.txt")
-lines = [line.strip("\n") for line in file.readlines()]
-most_probable_decrypted_lines = []
-for line in lines:
-    print(line)
-    decryption_key, decrypted_bytes = highest_probability_decrypted_bytes(line)
-    most_probable_decrypted_lines.append(decrypted_bytes)
-    print(decryption_key)
-    print(decrypted_bytes)
-# print(lines)
-highest_probability = -1
-hidden_message = ""
-for decrypted_line in most_probable_decrypted_lines:
-        current_probability = sum([frequencies.get(chr(decrypted_byte),0) for decrypted_byte in decrypted_line])
-        if current_probability > highest_probability:
-            highest_probability = current_probability
-            hidden_message = decrypted_line
+# file = open("./single_xor_hay.txt")
+# lines = [line.strip("\n") for line in file.readlines()]
+# most_probable_decrypted_lines = []
+# for line in lines:
+#     print(line)
+#     decryption_key, decrypted_bytes = highest_probability_decrypted_bytes(line)
+#     most_probable_decrypted_lines.append(decrypted_bytes)
+#     print(decryption_key)
+#     print(decrypted_bytes)
+# # print(lines)
+# highest_probability = -1
+# hidden_message = ""
+# for decrypted_line in most_probable_decrypted_lines:
+#         current_probability = sum([frequencies.get(chr(decrypted_byte),0) for decrypted_byte in decrypted_line])
+#         if current_probability > highest_probability:
+#             highest_probability = current_probability
+#             hidden_message = decrypted_line
 
-print("hidden message", hidden_message)
+# print("hidden message", hidden_message)
+
+# encrypting a message using repeating-key XOR algorithm
+encrypted_message = repeating_key_xor_encrypt("""Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal""", "ICE")
+print(encrypted_message.hex())
+
