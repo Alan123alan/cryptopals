@@ -1,4 +1,4 @@
-import string
+# import string
 
 def xor(buffer1:str, buffer2:str)->bytes:
     if len(buffer1) != len(buffer2):
@@ -8,10 +8,12 @@ def xor(buffer1:str, buffer2:str)->bytes:
     return bytes([b1_byte ^ b2_byte for (b1_byte, b2_byte) in zip(buffer1_bytes, buffer2_bytes)])
 
 def xor_decrypt(encrypted_str, key):
-    # Ensure key is an integer
-    key = ord(key) if isinstance(key, str) else key
-    # XOR operation for each byte
-    return bytes(byte ^ key for byte in bytes.fromhex(encrypted_str))
+    #Prefer the approach of constructing a bytes string
+    # decrypted_bytes = b""
+    # for byte in bytes.fromhex(encrypted_str):
+    #     decrypted_bytes += bytes([byte ^ key])
+    # return decrypted_bytes
+    return bytes([byte ^ key for byte in bytes.fromhex(encrypted_str)])
 
 
 def highest_probability_decrypted_str(encrypted_str):
@@ -47,12 +49,15 @@ def highest_probability_decrypted_str(encrypted_str):
     highest_probability_key = -1
     highest_probability_decrypted_str = ""
     for key in range(128):
-        print(f"do you loop? {key}")
-        decrypted_str = xor_decrypt(encrypted_str, key).decode(encoding="utf-8")
-        if sum([frequencies.get(ch,0) for ch in decrypted_str]) > highest_probability:
-            highest_probability = sum([frequencies.get(ch.lower(),0) for ch in decrypted_str])
+        decrypted_bytes = xor_decrypt(encrypted_str, key)
+        print(decrypted_bytes)
+        # print(decrypted_bytes.decode(encoding="utf-8"))
+        #setting all chars in the decoded string to lower breaks the algo
+        current_probability = sum([frequencies.get(chr(decrypted_byte),0) for decrypted_byte in decrypted_bytes])
+        if current_probability > highest_probability:
+            highest_probability = current_probability
             highest_probability_key = key
-            highest_probability_decrypted_str = decrypted_str
+            highest_probability_decrypted_str = decrypted_bytes
     return (highest_probability_key, highest_probability_decrypted_str)
 
 
