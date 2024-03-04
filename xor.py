@@ -60,6 +60,26 @@ def repeating_key_xor_encrypt(buffer, key):
     return encrypted_bytes
 
 
+def hamming_distance(buffer_1, buffer_2):
+    buffer_1_bytes = bytes(buffer_1, "utf-8")
+    buffer_2_bytes = bytes(buffer_2, "utf-8")
+    if len(buffer_1_bytes) != len(buffer_2_bytes):
+        raise "Both buffers need to be the same length to calculate hamming distance"
+    differing_bits_count = 0
+    for b1_byte, b2_byte in zip(buffer_1_bytes, buffer_2_bytes):
+        for i in range(32):
+            # shift buffer bytes to the right (ints occupy 32 bits in memory)
+            # bitwise and the buffer bytes with 1, this way we will compare only the current bit of interest 
+            if ((b1_byte >> i) & 1) != ((b2_byte >> i) & 1):
+                differing_bits_count += 1
+
+    return differing_bits_count 
+
+
+def repeating_key_xor_decrypt(buffer):
+    pass
+
+
 def highest_probability_decrypted_bytes(encrypted_str):
     highest_probability = -1
     highest_probability_key = -1
@@ -105,7 +125,14 @@ def highest_probability_decrypted_bytes(encrypted_str):
 # print("hidden message", hidden_message)
 
 # encrypting a message using repeating-key XOR algorithm
-encrypted_message = repeating_key_xor_encrypt("""Burning 'em, if you ain't quick and nimble
-I go crazy when I hear a cymbal""", "ICE")
-print(encrypted_message.hex())
+# encrypted_message = repeating_key_xor_encrypt("""Burning 'em, if you ain't quick and nimble
+# I go crazy when I hear a cymbal""", "ICE")
+# print(encrypted_message.hex())
+
+
+# calculating hamming distance
+# usually in coding challenges hamming distance is calculated by comparing and getting the count of differing chars between strings
+# cryptopals defines it as the differing bits
+# compare the bits in each byte?
+print(hamming_distance("this is a test", "wokka wokka!!!"))
 
