@@ -1,4 +1,18 @@
 # import string
+import base64
+
+#when trying to convert a hex string to it's bytes representation
+#you need to use bytes.fromhex()
+#then you can easily encode those bytes to base64 with base64.b64encode()
+def hex_2_base64(hex_str:str)->bytes:
+    return base64.b64encode(bytes.fromhex(hex_str))
+
+# when trying to convert a base64 string to it's bytes representation
+# you can use .encode("utf-8") or bytes(b64_str, "utf-8")
+# then you can easily decode those bytes from base64 with base64.b64decode()
+def base64_decode(base64_str:bytes)->bytes:
+    # return base64.b64decode(base64_str.encode(encoding="utf-8"))
+    return base64.b64decode(base64_str)
 
 frequencies = {
     "e" : 12000,
@@ -133,6 +147,31 @@ def highest_probability_decrypted_bytes(encrypted_str):
 # calculating hamming distance
 # usually in coding challenges hamming distance is calculated by comparing and getting the count of differing chars between strings
 # cryptopals defines it as the differing bits
-# compare the bits in each byte?
-print(hamming_distance("this is a test", "wokka wokka!!!"))
+# compare the bits in each byte? yes!
+# print(hamming_distance("this is a test", "wokka wokka!!!"))
+
+# a whole file was encrypted with repeating-key XOR then encrypted to base64
+# to start breaking the repeating-key XOR we first need to undo the  data transformations post the repeating key XOR encryption
+# repeating-key XOR -> base64 <- base64 <- repeating-key XOR
+file = open("repeating_xor_encrypted_hay.txt")
+b64_decoded_line_bytes = b""
+for line in file.readlines():
+    b64_decoded_line_bytes += base64.b64decode(line.strip("\n"))
+# breaking the repeating-key XOR
+# for each possible keysize take the first and second keysize worth of bytes
+# and calculate the hamming distance
+keysizes = list(range(2,40))
+# calculating the hamming distance between two substrings of varying lengths from the encrypted file 
+# let's us test for the repetition rate of the key, if key is size 4, every 4 bytes we are going to have the key repeating
+# seems like this breaking algorithm is based on the XOR operation leaving some kind of trace on it's result
+normalized_hamming_distances = []
+for keysize in keysizes:
+    normalized_hamming_distances.append({
+        "keysize": keysize,
+        "distance": hamming_distance(b64_decoded_line_bytes[:keysize].decode("utf-8"), b64_decoded_line_bytes[keysize:keysize*2].decode("utf-8"))/keysize
+    })
+
+print(sorted(normalized_hamming_distances, key=lambda x: x["distance"]))
+
+
 

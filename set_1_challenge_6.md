@@ -5,5 +5,6 @@ first decrypt the base64 encrypted file, from there it's implementing the repeat
 
 Algorithm to break repeating-key XOR encryption provided by cryptopals challenge 6.
 
-1. Guess the key, proposed values from 2 to 40
-2. Calculate the hamming distance between two strings
+1. Guess the keysize, proposed values from 2 to 40
+2. Calculate the hamming distance between two strings (per bit)
+3. for each keysize take the first and second keysize worth of bytes and calculate the hamming distance between those bytes then divide by the current keysize 
