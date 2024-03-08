@@ -15,12 +15,71 @@ def base64_decode(base64_str:bytes)->bytes:
     # return base64.b64decode(base64_str.encode(encoding="utf-8"))
     return base64.b64decode(base64_str)
 
+frequencies = {
+    "e" : 12000,
+    "E" : 12000,
+    "t" : 9000,
+    "T" : 9000,
+    "a" : 8000,
+    "A" : 8000,
+    "i" : 8000,
+    "I" : 8000,
+    "n" : 8000,
+    "N" : 8000,
+    "o" : 8000,
+    "O" : 8000,
+    "s" : 8000,
+    "S" : 8000,
+    "h" : 6400,
+    "H" : 6400,
+    "r" : 6200,
+    "R" : 6200,
+    "d" : 4400,
+    "D" : 4400,
+    "l" : 4000,
+    "L" : 4000,
+    "u" : 3400,
+    "U" : 3400,
+    "c" : 3000,
+    "C" : 3000,
+    "m" : 3000,
+    "M" : 3000,
+    "f" : 2500,
+    "F" : 2500,
+    "w" : 2000,
+    "W" : 2000,
+    "y" : 2000,
+    "Y" : 2000,
+    "g" : 1700,
+    "G" : 1700,
+    "p" : 1700,
+    "P" : 1700,
+    "b" : 1600,
+    "B" : 1600,
+    "v" : 1200,
+    "V" : 1200,
+    "k" : 800,
+    "K" : 800,
+    "q" : 500,
+    "Q" : 500,
+    "j" : 400,
+    "J" : 400,
+    "x" : 400,
+    "X" : 400,
+    "z" : 200,
+    "Z" : 200,
+}
 # frequencies = {
-#     "e" : 12000,
-#     "e" : 12000,
-#     "t" : 9000,
-#     "a" : 8000,
-#     "i" : 8000,
+#     #
+#     69 : 12000,
+#     101 : 12000,
+#     54 : 9000,
+#     74 : 9000,
+#     41 : 8000,
+#     61 : 8000,
+#     49 : 8000,
+#     69 : 8000,
+#     "n" : 8000,
 #     "n" : 8000,
 #     "o" : 8000,
 #     "s" : 8000,
@@ -44,40 +103,6 @@ def base64_decode(base64_str:bytes)->bytes:
 #     "x" : 400,
 #     "z" : 200,
 # }
-frequencies = {
-    #
-    69 : 12000,
-    101 : 12000,
-    54 : 9000,
-    74 : 9000,
-    41 : 8000,
-    61 : 8000,
-    49 : 8000,
-    69 : 8000,
-    "n" : 8000,
-    "n" : 8000,
-    "o" : 8000,
-    "s" : 8000,
-    "h" : 6400,
-    "r" : 6200,
-    "d" : 4400,
-    "l" : 4000,
-    "u" : 3400,
-    "c" : 3000,
-    "m" : 3000,
-    "f" : 2500,
-    "w" : 2000,
-    "y" : 2000,
-    "g" : 1700,
-    "p" : 1700,
-    "b" : 1600,
-    "v" : 1200,
-    "k" : 800,
-    "q" : 500,
-    "j" : 400,
-    "x" : 400,
-    "z" : 200,
-}
 
 
 def xor(buffer1:str, buffer2:str)->bytes:
@@ -180,7 +205,7 @@ def b_highest_probability_decrypted_bytes(encrypted_bytes):
     highest_probability = -1
     highest_probability_key = -1
     highest_probability_decrypted_bytes = b""
-    for key in range(256):
+    for key in range(128):
         decrypted_bytes = b_xor_decrypt(encrypted_bytes, key)
         current_probability = sum([frequencies.get(chr(decrypted_byte),0) for decrypted_byte in decrypted_bytes])
         if current_probability > highest_probability:
@@ -190,9 +215,9 @@ def b_highest_probability_decrypted_bytes(encrypted_bytes):
     return (highest_probability_key, highest_probability_decrypted_bytes)
 
 # finding the single character key that XOR'd a message and getting the decrypted message
-highest_probability_key, highest_probability_decrypted_str = b_highest_probability_decrypted_bytes(bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
-print(highest_probability_key)
-print(highest_probability_decrypted_str)
+# highest_probability_key, highest_probability_decrypted_str = b_highest_probability_decrypted_bytes(bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
+# print(highest_probability_key)
+# print(highest_probability_decrypted_str)
 
 
 # getting the most probable decrypted version of each line in a file
@@ -222,101 +247,95 @@ print(highest_probability_decrypted_str)
 # I go crazy when I hear a cymbal""", "ICE")
 # print(encrypted_message.hex())
 
+def break_repeating_key_xor(repeating_key_xor_encrypted_bytes):
+    # breaking the repeating-key XOR
+    # for each possible keysize take the first and second keysize worth of bytes
+    # and calculate the hamming distance per bit
+    # calculating the hamming distance between two substrings of varying lengths from the encrypted file 
+    # let's us test for the repetition rate of the key, if key is size 4, every 4 bytes we are going to have the key repeating
+    # seems like this breaking algorithm is based on the XOR operation leaving some kind of trace on it's result
+    # try by normalizing the sum of all bit differences by dividing over the keysize, getting the avg differences per byte
+    guess_keysize = sys.maxsize
+    lowest_normalized_hamming_distance = sys.maxsize
+    limit_keysize = 41 if len(repeating_key_xor_encrypted_bytes)//2 > 41 else len(repeating_key_xor_encrypted_bytes)//2
+    for keysize in range(2, limit_keysize):
+        first_keysize_block = repeating_key_xor_encrypted_bytes[:keysize] 
+        second_keysize_block = repeating_key_xor_encrypted_bytes[keysize:2*keysize] 
+        print("First keysize block computed: ", first_keysize_block, len(first_keysize_block), type(first_keysize_block))
+        print("Second keysize block computed: ", second_keysize_block, len(second_keysize_block), type(second_keysize_block))
+        normalized_hamming_distance = b_hamming_distance(first_keysize_block, second_keysize_block)/keysize
+        if normalized_hamming_distance < lowest_normalized_hamming_distance:
+            lowest_normalized_hamming_distance = normalized_hamming_distance
+            guess_keysize = keysize
 
-# calculating hamming distance
-# usually in coding challenges hamming distance is calculated by comparing and getting the count of differing chars between strings
-# cryptopals defines it as the differing bits
-# compare the bits in each byte? yes!
-# print(hamming_distance("this is a test", "wokka wokka!!!"))
+    print("Lowest normalized hamming distance: ", lowest_normalized_hamming_distance)
+    print("Guess keysize: ", guess_keysize)
 
-# a whole file was encrypted with repeating-key XOR then encrypted to base64
-# to start breaking the repeating-key XOR we first need to undo the  data transformations post the repeating key XOR encryption
-# repeating-key XOR -> base64 <- base64 <- repeating-key XOR
-file = open("repeating_xor_encrypted_hay.txt")
-b64_decoded_file_bytes = b""
-for line in file.readlines():
-    # print("striped decoded line", base64.b64decode(bytes(line.strip(), "ascii")).decode("utf-8"))
-    b64_decoded_file_bytes += base64.b64decode(bytes(line.strip(), "ascii"))
-b64_decoded_file_bytes_length = len(b64_decoded_file_bytes)
-print(f"the length of the file decoded bytes is {b64_decoded_file_bytes_length}")
-print(type(b64_decoded_file_bytes))
-print(b_hamming_distance(bytes("this is a test", "ascii"), bytes("wokka wokka!!!", "ascii")))
-print(b64_decoded_file_bytes)
-# breaking the repeating-key XOR
-# for each possible keysize take the first and second keysize worth of bytes
-# and calculate the hamming distance
-# keysizes = list(range(2,40))
-# calculating the hamming distance between two substrings of varying lengths from the encrypted file 
-# let's us test for the repetition rate of the key, if key is size 4, every 4 bytes we are going to have the key repeating
-# seems like this breaking algorithm is based on the XOR operation leaving some kind of trace on it's result
-# try by normalizing the sum of all bit differences
-guess_keysize = sys.maxsize
-lowest_normalized_hamming_distance = sys.maxsize
-# keysize_and_normalized_hamming_distance_list = []
-for keysize in range(2,41):
-    first_keysize_block = b64_decoded_file_bytes[:keysize] 
-    second_keysize_block = b64_decoded_file_bytes[keysize:2*keysize] 
-    print("First keysize block computed: ", first_keysize_block)
-    print("Second keysize block computed: ", second_keysize_block)
-    normalized_hamming_distance = b_hamming_distance(first_keysize_block, second_keysize_block)/keysize
-    if normalized_hamming_distance < lowest_normalized_hamming_distance:
-        lowest_normalized_hamming_distance = normalized_hamming_distance
-        guess_keysize = keysize
+    #break the cipher into blocks of keysize length
+    #calculate the number of full keysize length blocks of bytes in the file
+    keysize_blocks_count = len(repeating_key_xor_encrypted_bytes) // guess_keysize
+    print("Number of keysize blocks in file bytes computed: ", keysize_blocks_count)
+    #calculate the remainder number of bytes that don't fit into a full keysize block
+    remainder_bytes_count = len(repeating_key_xor_encrypted_bytes) % guess_keysize
+    print("Number of remaining bytes computed: ", remainder_bytes_count)
+    keysize_blocks = [repeating_key_xor_encrypted_bytes[i*guess_keysize:(i+1)*guess_keysize] for i in range(keysize_blocks_count-1)]
 
-print("Lowest normalized hamming distance: ", lowest_normalized_hamming_distance)
-print("Guess keysize: ", guess_keysize)
+    #break the continous keysize blocks into key specific blocks
+    per_keysize_blocks = []
+    for i in range(guess_keysize):
+        per_keysize_block = b""
+        for keysize_block in keysize_blocks:
+            # print(keysize_block[i], type(keysize_block[i]))
+            # print(keysize_block[i].to_bytes(1, byteorder="big"), type(keysize_block[i]))
+            per_keysize_block += keysize_block[i].to_bytes(1, byteorder="big")
+            # per_keysize_block.append(keysize_block[i])
+        per_keysize_blocks.append(per_keysize_block)
 
-# keysize_and_smallest_normalized_hamming_distance = sorted(keysize_and_normalized_hamming_distance_list, key=lambda x: x["distance"])[0]
-# # keysize_and_second_smallest_normalized_hamming_distance = sorted(keysize_and_normalized_hamming_distance_list, key=lambda x: x["distance"])[1]
-# keysize = keysize_and_smallest_normalized_hamming_distance["keysize"]
-# smallest_normalized_hamming_distance = keysize_and_smallest_normalized_hamming_distance["distance"]
+    print("previous to remainder bytes insertion\n\n", per_keysize_blocks[0], len(per_keysize_blocks[0]))
 
-# print(keysize_and_smallest_normalized_hamming_distance)
-# print(keysize)
-# print(smallest_normalized_hamming_distance)
-# print(b64_decoded_file_bytes_length/keysize)
+    # (TO BE IMPLEMENTED) append the remaining bytes into the corresponding groups
 
+    highest_probability_keys = []
+    for key_block in per_keysize_blocks:
+        # finding the single character key that XOR'd a message and getting the decrypted message
+        highest_probability_key, highest_probability_decrypted_b = b_highest_probability_decrypted_bytes(key_block)
+        highest_probability_keys.append(highest_probability_key)
+        print(highest_probability_key)
+        print(highest_probability_decrypted_b, type(highest_probability_decrypted_b))
 
-#break the cipher into blocks of keysize length
-#calculate the number of full keysize length blocks of bytes in the file
-keysize_blocks_count = b64_decoded_file_bytes_length // guess_keysize
-print("Number of keysize blocks in file bytes computed: ", keysize_blocks_count)
-#calculate the remainder number of bytes that don't fit into a full keysize block
-remainder_bytes_count = b64_decoded_file_bytes_length % guess_keysize
-print("Number of remaining bytes computed: ", remainder_bytes_count)
-keysize_blocks = [b64_decoded_file_bytes[i*guess_keysize:(i+1)*guess_keysize] for i in range(keysize_blocks_count-1)]
-
-
-#break the continous keysize blocks into key specific blocks
-per_keysize_blocks = []
-for i in range(guess_keysize):
-    per_keysize_block = b""
-    for keysize_block in keysize_blocks:
-        # print(keysize_block[i], type(keysize_block[i]))
-        # print(keysize_block[i].to_bytes(1, byteorder="big"), type(keysize_block[i]))
-        per_keysize_block += keysize_block[i].to_bytes(1, byteorder="big")
-        # per_keysize_block.append(keysize_block[i])
-    per_keysize_blocks.append(per_keysize_block)
-
-print("previous to remainder bytes insertion\n\n", per_keysize_blocks[0], len(per_keysize_blocks[0]))
-
-# append the remaining bytes into the corresponding groups
-# for i in range(remainder_bytes_count):
-#     per_keysize_blocks[i] += b64_decoded_file_bytes[(keysize_blocks_count*keysize)+i]
-# print("post remainder bytes insertion\n\n", per_keysize_blocks[0], len(per_keysize_blocks[0]))
-
-highest_probability_keys = []
-for key_block in per_keysize_blocks:
-    # finding the single character key that XOR'd a message and getting the decrypted message
-    highest_probability_key, highest_probability_decrypted_b = b_highest_probability_decrypted_bytes(key_block)
-    highest_probability_keys.append(highest_probability_key)
-    print(highest_probability_key)
-    print(highest_probability_decrypted_b, type(highest_probability_decrypted_b))
-
-print(highest_probability_keys)
-print(b_repeating_key_xor_encrypt(b64_decoded_file_bytes, highest_probability_keys))
+    print(highest_probability_keys)
+    return b_repeating_key_xor_encrypt(repeating_key_xor_encrypted_bytes, highest_probability_keys)
 
 
 
 
 
+#TESTS
+#checking that b_repeating_key_xor can encrypt all ascii (0-256) chars from a message
+#base64 encrypt the result of the b_repeating_key_xor
+#decrypt the base64 and b_repeating_key_xor and get back the same messahe
+def test_break_repeating_key_xor():
+    # file = open("repeating_xor_encrypted_hay.txt")
+    # b64_decoded_file_bytes = b""
+    # for line in file.readlines():
+    #     # print("striped decoded line", base64.b64decode(bytes(line.strip(), "ascii")).decode("utf-8"))
+    #     b64_decoded_file_bytes += base64.b64decode(bytes(line.strip(), "ascii"))
+    # b64_decoded_file_bytes_length = len(b64_decoded_file_bytes)
+    cipher = """Hello my name is John Doe I write this secret message as a test"""
+    key = "secret"
+    repeating_key_xor_encrypted_cipher = b_repeating_key_xor_encrypt(bytes(cipher, "utf-8"), bytes(key, "utf-8"))
+    print("repeating-key xor encrypted bytes: ",repeating_key_xor_encrypted_cipher)
+    b64_repeating_key_xor_encrypted_cipher = base64.b64encode(repeating_key_xor_encrypted_cipher)
+    print("base64 encoded repeating-key xor enconded bytes: " ,b64_repeating_key_xor_encrypted_cipher)
+    repeating_key_xor_encrypted_cipher = base64.b64decode(b64_repeating_key_xor_encrypted_cipher)
+    print("repeating-key xor encrypted bytes after decoding from base64: ",repeating_key_xor_encrypted_cipher)
+
+    print(break_repeating_key_xor(repeating_key_xor_encrypted_cipher))
+    
+
+
+
+
+
+if __name__ == "__main__":
+    test_break_repeating_key_xor()
