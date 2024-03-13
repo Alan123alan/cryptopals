@@ -1,5 +1,8 @@
 def english_score(decrypted_buffer_bytes):
     #English score function based on chi2 testing
+    #frequencies taken from wikipedia letter frequency
+    #https://en.wikipedia.org/wiki/Letter_frequency
+    #passed values from percent to decimals
     english_frequencies = {"e" : 0.127,"t" : 0.091,"a" : 0.082,"i" : 0.070,"n" : 0.067,"o" : 0.075,"s" : 0.063,"h" : 0.061,"r" : 0.060,"d" : 0.043,"l" : 0.040,"u" : 0.028,"c" : 0.028,"m" : 0.024,"f" : 0.022,"w" : 0.024,"y" : 0.020,"g" : 0.020,"p" : 0.019,"b" : 0.015,"v" : 0.0098,"k" : 0.0077,"q" : 0.00095,"j" : 0.0015,"x" : 0.0015,"z" : 0.00074}
     observed_frequencies = [0 for _ in range(27)]
     for b in decrypted_buffer_bytes:
@@ -23,6 +26,7 @@ def break_single_key_xor_encryption(buffer_bytes, test_keys):
         decrypted_buffer_bytes = single_key_xor_encrypt(buffer_bytes, key_byte)
         score = english_score(decrypted_buffer_bytes)
         results.append({"key": chr(key_byte), "score": score, "decrypted_bytes": decrypted_buffer_bytes})
+    print("Results: ",sorted(results, key=lambda x: x["score"])[0:10])
     return sorted(results, key=lambda x: x["score"])[0]
 
 
